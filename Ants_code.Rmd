@@ -1,0 +1,481 @@
+---
+title: "Ants network"
+author: "Anshuman"
+date: "12/17/2019"
+output: html_document
+---
+```{r}
+#random, rough
+library(igraph)
+
+A=read_graph(file="~/Downloads/ants_proximity_weighted/weighted_ant_mersch_colony1_day01.graphml", format = "graphml")
+
+
+heatmap(as.matrix(as_adjacency_matrix(read_graph(file="~/Downloads/ants_proximity_weighted/weighted_ant_mersch_colony2_day01.graphml", format = "graphml"))))
+
+A=read.table(file="~/Downloads/doi_10.5061_dryad.8d8h7__v1/tracking_data/network_col1_day9.txt", sep = ",", header=T)
+rownames(A)=colnames(A)
+A=data.matrix(A)
+heatmap(as.matrix(A2))
+
+
+
+BB=read.csv(file="~/Downloads/behavior_edited.csv")
+A2=read.csv(file="~/Downloads/network_col1_day2.csv", sep = ",", header=T)
+rownames(A2)=A2[,1]
+A2=A2[,-1]
+
+
+setdiff(unique(colnames(A2)), (unique(as.character((BB$Ant_ID[which(BB$colony=="4")])))))
+
+meta = BB[which(BB$colony=="4"),]
+antgr<-graph_from_adjacency_matrix(as.matrix(A2), mode = "undirected")
+
+
+meta.ordered <- meta[match(vertex_attr(antgr)[["name"]], meta$Ant_ID),]
+for (name in colnames(meta)){
+  antgr <- set_vertex_attr(antgr, name, index = V(antgr), meta[,name])
+}
+
+g=antgr
+troint.sbm<- mixer(as.matrix(get.adjacency(g)), qmin=2, qmax=20)
+troint.sbm.output <- getModel(troint.sbm)
+names(troint.sbm.output)
+troint.sbm.output$q
+
+
+plot(troint.sbm, frame=1)
+plot(troint.sbm, frame=2)
+plot(troint.sbm, frame=3)
+
+plot(troint.sbm, classes=as.factor(V(g)$group_period1), frame=4, main="group_period1", classes.col = unique(as.factor(V(g)$group_period1)))
+legend("bottomright", legend=levels(as.factor(V(g)$group_period1)), pch=c(16,16),col=unique(as.factor(V(g)$group_period1)), cex=0.8, text.font=4, bg='white', title = "group_period1")
+```
+
+```{r}
+#start of actual code
+####colony (1,2,3,4,5,6)= (4, 18, 21, 29, 58, 78)
+#
+
+#creating a list of all adj matrices
+BB=read.csv(file="~/Downloads/behavior_edited.csv")
+Antall2=list()
+Antgr=list()
+listname=c(4,18,21,29,58,78)
+for(i in 1:6)
+{
+  X0=paste("~/Downloads/doi_10.5061_dryad.8d8h7__v1/tracking_data/network_col",i,"_day",1,".txt",sep="")
+  print(X0)
+  A0=read.table(file=X0, sep = ",", header=T)
+  X11=paste("Colony", i, sep = "")
+  Antall2[[X11]]=list()
+  Antgr[[X11]]=list()
+  for (j in 1:41){
+    X1=paste("~/Downloads/doi_10.5061_dryad.8d8h7__v1/tracking_data/network_col",i,"_day",j,".txt",sep="")
+    A=read.table(file=X1, sep = ",", header=T)
+    print(nrow(A))
+    rownames(A)=colnames(A)
+
+    id=which(colnames(A) %in% as.character(setdiff(unique(colnames(A0)), (unique(as.character((BB$Ant_ID[which(BB$colony==listname[i])])))))))
+
+    A=A[-c(id), -c(id)]
+    A=data.matrix(A)
+    
+    Antall2[[X11]][[j]]=A
+    print(nrow(A))
+    Antgr[[X11]][[j]]<-graph_from_adjacency_matrix(as.matrix(A), mode = "undirected", weighted = TRUE)
+    
+    
+    #X3= paste("~/Downloads/Ants/revised/Colony",i,"/day",j,".csv",sep="")
+    #write.csv(A, file=X3)
+  }
+}
+
+```
+
+
+```{r}
+
+graphRM=Antgr$Colony1[[25]]
+V(graphRM)$frame.color <- "white"
+V(graphRM)$label <- ""
+V(graphRM)$color <- "orange"
+V(graphRM)$size <- 10
+E(graphRM)$arrow.mode <- 0
+
+coordsRM = layout_with_fr(graphRM)
+plot(graphRM, weighted=T)
+print("Louvain:")
+communities = graphRM %>% 
+  cluster_louvain(weights = NULL)
+plot(communities, graphRM, layout=coordsRM)
+```
+
+
+```{r}
+#calculating metrics
+library(dplyr)
+
+Antbetween=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    A=betweenness(Antgr[[X11]][[1]], v = V(Antgr[[X11]][[1]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      A=betweenness(Antgr[[X11]][[j]], v = V(Antgr[[X11]][[j]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Antbetween[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/betweenness/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+
+```
+
+
+```{r}
+Antstrength=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    A=strength(Antgr[[X11]][[1]], vids = V(Antgr[[X11]][[1]]), loops = TRUE)
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      A=strength(Antgr[[X11]][[j]], vids = V(Antgr[[X11]][[j]]), loops = TRUE)
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Antstrength[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/strength/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+```
+
+```{r}
+Anteigen=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    A= eigen_centrality(Antgr[[X11]][[1]], directed = FALSE, scale = TRUE, options = arpack_defaults)$vector
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      A=eigen_centrality(Antgr[[X11]][[j]], directed = FALSE, scale = TRUE, options = arpack_defaults)$vector
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Anteigen[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/eigenvector_centrality/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+```
+
+
+```{r}
+Antclose=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    A=closeness(Antgr[[X11]][[1]], vids = V(Antgr[[X11]][[1]]))
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      A=closeness(Antgr[[X11]][[j]], vids = V(Antgr[[X11]][[j]]))
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      #print(dim(X2))
+    }
+    Antclose[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/closeness_centrality/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+```
+
+```{r}
+#Antclose=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    communities = Antgr[[X11]][[1]] %>% cluster_louvain(weights = NULL)
+    A= bridge(Antgr[[X11]][[1]], communities, useCommunities = "all",directed = NULL, nodes = NULL, normalize = FALSE)$`Bridge Strength`
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      communities = Antgr[[X11]][[j]] %>% cluster_louvain(weights = NULL)
+      A= bridge(Antgr[[X11]][[j]], communities, useCommunities = "all",directed = NULL, nodes = NULL, normalize = FALSE)$`Bridge Strength`
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      #print(dim(X2))
+    }
+    #Antclose[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/bridge_properties/strength/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+```
+
+
+```{r}
+namelist=c("Bridge Strength","Bridge Betweenness", "Bridge Closeness", "Bridge Expected Influence (1-step)", "Bridge Expected Influence (2-step)")
+library(networktools)
+nodea=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    communities00 = Antgr[[X11]][[1]] %>% cluster_louvain(weights = NULL)
+    A00= bridge(Antgr[[X11]][[1]], communities00, useCommunities = "all",directed = NULL, nodes = NULL, normalize = FALSE)
+    for (j in 2:41) {
+    communities = Antgr[[X11]][[j]] %>% cluster_louvain(weights = NULL)
+    A= bridge(Antgr[[X11]][[j]], communities, useCommunities = "all",directed = NULL, nodes = NULL, normalize = FALSE)
+      
+      for (k in 1:5) {
+        A00i=A00[k]
+        Ai=A[k]
+        namef=paste("A00i$`", namelist[k],"`", sep="")
+        X2=cbind(as.character(names(A00i$namelist[k])), as.numeric(A00i))
+        colnames(X2)=c("AntID", "Day1")
+        X2=as.data.frame(X2)
+        X3=cbind(as.character(names(Ai)), as.numeric(Ai))
+        X3=as.data.frame(X3)
+        colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+        nodea[[k]]=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+        #print(dim(X2))
+      }
+      
+    }
+    
+    
+}
+
+X3= paste("~/Downloads/Ants/bridge_properties/",namelist[k],"/Colony",i,".csv",sep="")
+      write.csv(nodea[[k]], file=X3)
+
+```
+
+
+
+
+```{r}
+
+
+
+
+graphRM=graph_from_adjacency_matrix(Antall2$Colony2[[3]], mode = "undirected", weighted = TRUE)
+A=betweenness(graphRM, v = V(graphRM), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+B=betweenness(graphRM, v = V(graphRM), directed = FALSE, nobigint = TRUE, normalized = FALSE)+1
+
+cbind(A,B)
+B=0
+for (j in 12:20) {
+  A=betweenness(Antgr$Colony1[[j]], v = V(Antgr$Colony1[[j]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+  B=cbind(B,A)
+  colnames(B)[j-11]=j
+}
+bridge(graphRM, communities, useCommunities = "all",directed = NULL, nodes = NULL, normalize = FALSE)
+V(graphRM)
+
+```
+
+
+```{r}
+Antbetween=list()
+for(i in 1:6){
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    A=betweenness(Antgr[[X11]][[1]], v = V(Antgr[[X11]][[1]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      A=betweenness(Antgr[[X11]][[j]], v = V(Antgr[[X11]][[j]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Antbetween[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/betweenness/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+
+```
+
+
+```{r}
+library("VertexSort")
+Antsortstrength=list()
+for(i in 1:6){
+  set.seed(i)
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    Antg=dpr(Antgr[[X11]][[1]], viteration_no=1, vparallel = FALSE, vcpus = 1)
+    Antgr1=Antg[[1]]
+    A=strength(Antgr1, vids = V(Antgr1), loops = TRUE)
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      Antg=dpr(Antgr[[X11]][[j]], viteration_no=1, vparallel = FALSE, vcpus = 1)
+      Antgr1=Antg[[1]]
+      A=strength(Antgr1, vids = V(Antgr1), loops = TRUE)
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Antsortstrength[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/strength/sort1/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+```
+
+```{r}
+library("VertexSort")
+Antsortstrength=list()
+for(i in 1:2){
+  set.seed(i)
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    Antg=dpr(Antgr[[X11]][[1]], viteration_no=1, vparallel = FALSE, vcpus = 1)
+    Antgr1=Antg[[1]]
+    A=betweenness(Antgr[[X11]][[1]], v = V(Antgr[[X11]][[1]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      Antg=dpr(Antgr[[X11]][[j]], viteration_no=1, vparallel = FALSE, vcpus = 1)
+      Antgr1=Antg[[1]]
+      A=betweenness(Antgr[[X11]][[j]], v = V(Antgr[[X11]][[j]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Antsortstrength[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/betweenness/sort2/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+```
+
+
+```{r}
+library("VertexSort")
+Antsortstrength=list()
+for(i in 1:2){
+  set.seed(i)
+    X11=paste("Colony", i, sep = "")
+    print(X11)
+    Antg=dpr(Antgr[[X11]][[1]], viteration_no=1, vparallel = FALSE, vcpus = 1)
+    Antgr1=Antg[[1]]
+    A=betweenness(Antgr[[X11]][[1]], v = V(Antgr[[X11]][[1]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+    X2=cbind(as.character(names(A)), as.numeric(A))
+    colnames(X2)=c("AntID", "Day1")
+    X2=as.data.frame(X2)
+    for (j in 2:41) {
+      Antg=dpr(Antgr[[X11]][[j]], viteration_no=1, vparallel = FALSE, vcpus = 1)
+      Antgr1=Antg[[1]]
+      A=betweenness(Antgr[[X11]][[j]], v = V(Antgr[[X11]][[j]]), directed = FALSE, nobigint = TRUE, normalized = FALSE)
+      X3=cbind(as.character(names(A)), as.numeric(A))
+      X3=as.data.frame(X3)
+      colnames(X3)=c("AntID", paste("Day", j, sep = ""))
+      X2=left_join(as.data.frame(X2), as.data.frame(X3), by="AntID")
+      print(dim(X2))
+    }
+    Antsortstrength[[X11]]=X2
+    
+    X3= paste("~/Downloads/Ants/betweenness/sort2/Colony",i,".csv",sep="")
+    write.csv(X2, file=X3)
+}
+
+```
+
+
+
+```{r}
+data=read.csv("~/Downloads/Ants/Ant_empirical_freq.csv")
+data$Interactions <- factor(data$Interactions , levels=c("One interaction", "Two interactions", "Multiple interactions"))
+plot( data$Value~data$Interactions, xlab="Number of interaction types", ylab="Proportion of ants")
+
+t.test(data$Value[which(data$Interactions=="Multiple")], data$Value[which(data$Interactions=="Double")])
+```
+
+
+```{r}
+data=read.csv("~/Downloads/Ants/age_sum.csv")
+data$sum<- factor(data$sum, levels=c("single", "double", "triple"))
+plot( data$age.days.~data$sum)
+
+t.test(data$age.days.[which(data$sum=="triple")], data$age.days.[which(data$sum=="single")])
+```
+
+
+
+```{r}
+#ce_ants= read.csv("~/Downloads/ant_CE.csv")
+plot(ce_ants$day[1:41],ce_ants$effectiveness_micro[1:41], ylim = c(0,0.055), xlab = "Days", ylab = "Effectiveness", col="orange", pch=16, cex=0.7)
+lines(ce_ants$day[1:41],ce_ants$effectiveness_micro[1:41], col="orange")
+par(new=TRUE)
+plot(ce_ants$day[42:82],ce_ants$effectiveness_micro[42:82], ylim = c(0,0.055), xlab = "", ylab = "", col="darkslateblue", pch=16, cex=0.7)
+lines(ce_ants$day[42:82],ce_ants$effectiveness_micro[42:82], col="darkslateblue")
+par(new=TRUE)
+plot(ce_ants$day[83:123],ce_ants$effectiveness_micro[83:123], ylim = c(0,0.055), xlab = "", ylab = "", col="magenta", pch=16, cex=0.7)
+lines(ce_ants$day[83:123],ce_ants$effectiveness_micro[83:123], col="magenta")
+par(new=TRUE)
+plot(ce_ants$day[124:164],ce_ants$effectiveness_micro[124:164], ylim = c(0,0.055), xlab = "", ylab = "", col="olivedrab", pch=16, cex=0.7)
+lines(ce_ants$day[124:164],ce_ants$effectiveness_micro[124:164], col="olivedrab")
+par(new=TRUE)
+plot(ce_ants$day[165:205],ce_ants$effectiveness_micro[165:205], ylim = c(0,0.055), xlab = "", ylab = "", col="tomato2", pch=16, cex=0.7)
+lines(ce_ants$day[165:205],ce_ants$effectiveness_micro[165:205], col="tomato2")
+par(new=TRUE)
+plot(ce_ants$day[206:246],ce_ants$effectiveness_micro[206:246], ylim = c(0,0.055), xlab = "", ylab = "", col="steelblue2", pch=16, cex=0.7)
+lines(ce_ants$day[206:246],ce_ants$effectiveness_micro[206:246], col="steelblue2")
+legend("bottomleft", 
+  legend = c("Colony 1", "Colony 2", "Colony 3", "Colony 4", "Colony 5", "Colony 6"), 
+  col = c("orange", "darkslateblue", "magenta", "olivedrab", "tomato2", "steelblue2"), 
+  pch = c(16,16,16,16,16,16), 
+  bty = "n", 
+  pt.cex = 1, 
+  cex = 1, 
+  text.col = "black", 
+  horiz = F , 
+  inset = c(0.05, 0.5))
+```
+
