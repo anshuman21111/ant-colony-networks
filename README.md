@@ -29,4 +29,4 @@ This set of scripts descripe the pipeline for calculating the entropy measures u
 3. An R script to calculate 'Effective information', which descrbes the noisiness of the network
 There are three other scripts in this folder, which serve as side-utilities.
 
-This page will be updated with more information, once we publish the work. If you ahve any questions, please feel free to reach out to us.
+This page will be updated with more information, once we publish the work. If you have any questions, please feel free to reach out to us.
