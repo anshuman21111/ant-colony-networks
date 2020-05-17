@@ -16,7 +16,7 @@
 Colony behaviour in ants is affected by how they interact with each other. Through these interactions, ants barter information that impact the allocation of tasks or functions among them. What is the specific role played by interaction networks in determining task allocation, and how this relates to the exchange of information flows between individual ants and between functional groups of ants - is relatively under-explored. 
 In this project, we use robust network-based methods and metrics to a publicly available dataset of interaction networks (see Mersch et al., 2013, Science) in six Camponotus fellah colonies, where ants are nodes and their interactions are edges. We calculate network centrality metrics and certain entropy measures, and compute a switching interaction matrix, to explore how interaction patterns impact the switching behavior across three functional groups: foragers, cleaners and nurses. 
 
-![alt text](imgs/00002b.png)
+![antnet](img/00002b.png)
 **Figure 1**: An example of ant interaction network visualized along with the communities detected via the Louvain algorithm. Please note that the network is weighted, but for simplicity of illustration, we have replaced the weighted edges with simple ones.
 
 ## Short Description of the files in this repository ##
