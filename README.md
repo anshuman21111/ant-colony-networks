@@ -1,5 +1,5 @@
 # Interactions, information and emergence: Exploring task allocation in ant colonies using network analysis #
-**Team members:** Anshuman Swain<sup>1,*</sup>, Sara Williams<sup>2,*</sup>, Louisa Jane Di Felice<sup>3,*</sup>, and Elizabeth A. Hobson<sup>4</sup>
+**Team members:** Anshuman Swain<sup>1,* </sup>, Sara Williams<sup>2,* </sup>, Louisa Jane Di Felice<sup>3,* </sup>, and Elizabeth A. Hobson<sup>4</sup>
 
 <sup>1</sup>Department of Biology, University of Maryland, College Park, MD 20742, USA;
 <sup>2</sup>Department of Marine and Environmental Sciences, Northeastern University, Boston, MA, USA;
