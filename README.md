@@ -22,7 +22,7 @@ These scripts are written in R and have three files in the folder 'base_scripts'
 
 
 ***Information theory based methods and their scripts***
-This set of scripts descripe the pipeline for calculating the entropy measures used in our work, and include:
+This set of R scripts descripe the pipeline for calculating the entropy measures used in our work, and include:
 1. An R script to calculate 'Causal emergence', which can measure hierarchy in information flow in networks
 2. An R script to check network information 
 3. An R script to calculate 'Effective information', which descrbes the noisiness of the network
