@@ -13,6 +13,8 @@ Colony behaviour in ants is affected by how they interact with each other. Throu
 In this project, we use robust network-based methods and metrics to a publicly available dataset of interaction networks in six Camponotus fellah colonies, where ants are nodes and their interactions are edges. We calculate network centrality metrics and certain entropy measures, and compute a switching interaction matrix, to explore how interaction patterns impact the switching behavior across three functional groups: foragers, cleaners and nurses. 
 
 **Short Description of the files in this repository**
+
+
 ***Base scripts***
 These scripts are written in R and have three files in the folder 'base_scripts':
 1. An R script for cleaning original dataset and building networks
